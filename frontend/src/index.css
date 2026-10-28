@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300;500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: "IBM Plex Sans", sans-serif;
+    background: #FCFCFA;
+    color: #1A2025;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .font-display { font-family: "Manrope", sans-serif; }
+.font-mono { font-family: "IBM Plex Mono", monospace; }
+
+::selection { background: #D96C50; color: #fff; }
+
+.label-caps { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.68rem; font-weight: 600; color: #5C6B75; }
+
+.grain::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .35;
+    background-image: radial-gradient(#E3DCCD 0.6px, transparent 0.6px);
+    background-size: 14px 14px;
+}
+
+.fade-up { animation: fadeUp .5s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.thin-scroll::-webkit-scrollbar { width: 6px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: #E3DCCD; border-radius: 6px; }
+
+@layer base {
+    :root {
+        --background: 60 20% 98%;
+        --foreground: 207 17% 12%;
+        --card: 0 0% 100%;
+        --card-foreground: 207 17% 12%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 207 17% 12%;
+        --primary: 206 26% 22%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 60 8% 93%;
+        --secondary-foreground: 207 17% 12%;
+        --muted: 60 8% 93%;
+        --muted-foreground: 204 12% 41%;
+        --accent: 12 64% 58%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 60 9% 89%;
+        --input: 60 9% 89%;
+        --ring: 12 64% 58%;
+        --radius: 0.75rem;
+    }
+}
+
+@layer base {
+    * { @apply border-border; }
+    body { @apply bg-background text-foreground; }
+}
+
+@layer base {
+    [data-debug-wrapper="true"] { display: contents !important; }
+    [data-debug-wrapper="true"] > * {
+        margin-left: inherit; margin-right: inherit; margin-top: inherit; margin-bottom: inherit;
+        padding-left: inherit; padding-right: inherit; padding-top: inherit; padding-bottom: inherit;
+        column-gap: inherit; row-gap: inherit; gap: inherit;
+        border-left-width: inherit; border-right-width: inherit; border-top-width: inherit; border-bottom-width: inherit;
+        border-left-style: inherit; border-right-style: inherit; border-top-style: inherit; border-bottom-style: inherit;
+        border-left-color: inherit; border-right-color: inherit; border-top-color: inherit; border-bottom-color: inherit;
+    }
+}
