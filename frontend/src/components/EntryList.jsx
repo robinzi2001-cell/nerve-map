@@ -11,7 +11,7 @@ export const EntryList = ({ entries, selected, onSelect }) => {
   const ql = q.toLowerCase();
   const list = entries.filter((e) => {
     if (ev && e.evidence !== ev) return false;
-    if (!ql) return e.layer !== "zaehne";
+    if (!ql) return true;
     return [e.name, e.latin, e.description, ...(e.symptoms || []), ...(e.conditions || [])].join(" ").toLowerCase().includes(ql);
   });
   const layerLabel = (k) => LAYERS.find((l) => l.key === k)?.label;

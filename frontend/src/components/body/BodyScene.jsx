@@ -9,7 +9,7 @@ export const VIEWS = {
   vorne: { pos: [0, 0.95, 3.1], target: [0, 0.88, 0], label: "Vorne" },
   hinten: { pos: [0, 0.95, -3.1], target: [0, 0.88, 0], label: "Hinten" },
   seite: { pos: [3.1, 0.95, 0], target: [0, 0.88, 0], label: "Seite" },
-  kopf: { pos: [0.12, 1.62, 0.36], target: [0, 1.59, 0.03], label: "Kopf & Zähne" },
+  kopf: { pos: [0.15, 1.63, 0.5], target: [0, 1.59, 0.03], label: "Kopf & Zähne" },
   becken: { pos: [0.4, 1.0, -1.0], target: [0, 0.93, 0], label: "Becken" },
 };
 

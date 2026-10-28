@@ -55,7 +55,7 @@ export const EntryMesh = ({ entry, selected, highlighted, dimmed, onSelect, miss
       {(entry.positions || []).map((p, i) => (
         <group key={i}>
           <mesh position={p} onClick={pick} onPointerOver={onHover(true)} onPointerOut={onHover(false)}>
-            {isTooth ? <boxGeometry args={[0.0085, 0.012, 0.0085]} /> : <sphereGeometry args={[active ? 0.011 : 0.008, 16, 12]} />}
+            {isTooth ? <boxGeometry args={[0.0062, 0.011, 0.0068]} /> : <sphereGeometry args={[active ? 0.011 : 0.008, 16, 12]} />}
             <meshStandardMaterial color={color} emissive={active ? color : "#000"} emissiveIntensity={active ? 0.6 : 0}
               transparent opacity={isTooth && missing ? 0.35 : dimmed ? 0.3 : 1} roughness={0.35} />
           </mesh>
@@ -63,7 +63,7 @@ export const EntryMesh = ({ entry, selected, highlighted, dimmed, onSelect, miss
         </group>
       ))}
       {(hover === entry.code || selected) && (entry.positions?.[0] || entry.paths?.[0]?.[Math.floor(entry.paths[0].length / 2)]) && (
-        <Html position={entry.positions?.[0] || entry.paths[0][Math.floor(entry.paths[0].length / 2)]} distanceFactor={1.4} style={{ pointerEvents: "none" }}>
+        <Html position={entry.positions?.[0] || entry.paths[0][Math.floor(entry.paths[0].length / 2)]} style={{ pointerEvents: "none" }}>
           <div className="whitespace-nowrap rounded-md bg-[#1A2025] px-2 py-1 text-[11px] font-medium text-white shadow-lg -translate-y-6">{entry.name}</div>
         </Html>
       )}

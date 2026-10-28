@@ -10,6 +10,14 @@ import { api, errText, EVIDENCE, LAYERS } from "@/lib/api";
 const EMPTY = { code: "", name: "", latin: "", layer: "druckpunkte", tradition: "TCM", color: "#D96C50", description: "", symptoms: [], conditions: [],
   technique: "", contraindications: "", evidence: "schwach", pubmed_query: "", related: [], positions: [[-0.1, 1.2, 0.1]], paths: null, claims: [], studies: [] };
 
+const DEFAULTS = {
+  nerven: { tradition: "Schulmedizin", color: "#2F6FB0", evidence: "maessig" },
+  druckpunkte: { tradition: "TCM", color: "#D96C50", evidence: "schwach" },
+  meridiane: { tradition: "TCM", color: "#8E5BA8", evidence: "traditionell" },
+  zaehne: { tradition: "Schulmedizin", color: "#F5F1E6", evidence: "gut" },
+  ketten: { tradition: "Manuelle Therapie", color: "#839E8C", evidence: "schwach" },
+};
+
 const F = ({ label, children }) => (<label className="block space-y-1"><span className="label-caps">{label}</span>{children}</label>);
 
 export const EntryEditor = ({ open, onClose, entry, onSaved }) => {
@@ -53,7 +61,7 @@ export const EntryEditor = ({ open, onClose, entry, onSaved }) => {
           <F label="Latein / Kürzel"><Input data-testid="editor-latin" value={f.latin} onChange={set("latin")} /></F>
           <F label="Tradition / Methode"><Input data-testid="editor-tradition" value={f.tradition} onChange={set("tradition")} /></F>
           <F label="Ebene">
-            <Select value={f.layer} onValueChange={set("layer")}>
+            <Select value={f.layer} onValueChange={(v) => setF({ ...f, layer: v, ...(isNew ? DEFAULTS[v] : {}) })}>
               <SelectTrigger data-testid="editor-layer"><SelectValue /></SelectTrigger>
               <SelectContent>{LAYERS.filter((l) => l.data).map((l) => <SelectItem key={l.key} value={l.key}>{l.label}</SelectItem>)}</SelectContent>
             </Select>

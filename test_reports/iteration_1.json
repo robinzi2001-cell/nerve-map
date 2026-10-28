@@ -1,0 +1,47 @@
+{
+  "summary": "Full backend + frontend E2E test of NervenPfad. Backend 19/20 pytest pass (only failure: unescaped regex in ?q= -> 500). Frontend: all requested flows work: 3D canvas, layer toggles, view buttons, auto-rotate, slider, search/quick-symptoms/evidence filters, detail panel (zahn-13 with agenesis/tcm/claims/technique/contraindication/related/studies), related chip navigation, dental chart (select, mark-missing toggle, default 13 missing, show-chain-btn -> 3D + chain entry + Seite view), PubMed live search + prefill, admin login/error, entry table/filter, create/edit/delete via dialog, drop-in upload + import with error report, pubmed-add + duplicate toast, remove-study, logout. No page errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/entries?q=(", "issue": "User input passed raw into Mongo $regex -> 500 (re.error) for chars like '(' '[' '*' '+'. Fix: use re.escape(q) in list_entries."},
+      {"endpoint": "POST /api/auth/login", "issue": "Brute-force lockout identifier uses request.client.host which is the ingress pod IP (varies: saw 10.30.130.133 and 10.30.132.109 for same client). 7 bad attempts gave 7x401, no 429. Use X-Forwarded-For first IP or key by email only."},
+      {"endpoint": "DELETE /api/entries/{code}/studies/{idx}", "issue": "Negative idx (e.g. -1) not rejected -> removes last study. Validate idx >= 0."},
+      {"endpoint": "PUT /api/entries/{code}", "issue": "Changing code to an already existing code raises DuplicateKeyError -> 500 instead of 400."},
+      {"endpoint": "DELETE /api/entries/{code}", "issue": "Returns 200 even if entry doesn't exist (no 404)."},
+      {"endpoint": "POST /api/dropin/import", "issue": "If a study row fails validation mid-file (e.g. missing title), the exception aborts the file after earlier rows were already pushed; file is not moved -> re-import duplicates earlier rows. Validate per row and continue."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "EntryEditor (new entry)", "issue": "Default tradition is 'TCM' and color '#D96C50' for every new entry, even when layer is Nervensystem - easily saves wrong tradition badge.", "selector": "[data-testid='editor-tradition']", "priority": "LOW"},
+      {"component": "DentalChart", "issue": "show-chain-btn appears for any missing canine (13/23/33/43) but always opens the zahn-13 chain. Also missingTeeth.sort() mutates state array during render.", "selector": "[data-testid='show-chain-btn']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard left list", "issues": ["Teeth (32 entries) are hidden from the entry list unless a search term is typed ('45 Treffer' of 77) - intentional but not communicated; evidence filter without query also excludes teeth."]},
+      {"screen": "PubMed panel", "issue_note": "Query 'canine agenesis' returns veterinary (dog) papers first; seed/pubmed_query for tooth 13 should use 'maxillary canine agenesis' or 'permanent canine tooth agenesis'.", "issues": ["Content relevance of 'canine' keyword"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_nervenpfad_api.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "Escape regex in GET /api/entries q param (re.escape) to avoid 500",
+    "Fix brute-force identifier to use X-Forwarded-For (or email) so lockout works behind ingress",
+    "Validate idx>=0 in remove_study; return 400 on duplicate code in PUT; 404 on delete of missing entry",
+    "Make drop-in import resilient per row",
+    "Optional: better defaults in EntryEditor (tradition by layer), chain button only for tooth 13 or per-canine chain"
+  ],
+  "critical_code_review_comments": [
+    "server.py list_entries: raw $regex from user input (500 + ReDoS risk)",
+    "Login lockout keyed by proxy IP - ineffective in k8s",
+    "Entry responses expose '_id' as string (acceptable, serialized via alias) - fine",
+    "PUT replaces whole studies array with editor's copy: if a study is added from dashboard while admin editor is open with stale data, it gets overwritten"
+  ],
+  "updated_files": ["/app/backend/tests/test_nervenpfad_api.py"],
+  "success_rate": {"backend": "95% (19/20)", "frontend": "100% of requested flows"},
+  "test_credentials": "admin@nervenpfad.de / Nerven2026! (from /app/memory/test_credentials.md) - works. bcrypt $2b$ verified, httpOnly cookies set, CORS explicit origin + credentials verified, seed_admin only inserts if missing.",
+  "seed_data_creation": "None persisted. TEST_* entries and drop-in test files were created and cleaned up (entries deleted, importiert TEST files removed).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Run: REACT_APP_BACKEND_URL=... pytest /app/backend/tests/test_nervenpfad_api.py. xdist is enabled by default (tests use separate TEST_ codes). Teeth only appear in left list when searching (e.g. 'Zahn 13'). Window.confirm on admin delete - accept dialog in playwright. Brute-force test: use fake email to avoid locking admin.",
+  "rca of the issue": "Regex 500: list_entries builds {'$regex': q} directly; Mongo rejects invalid patterns like '(' -> OperationFailure -> 500. Lockout: request.client.host = ingress pod IP, multiple pods -> counter split across identifiers."
+}

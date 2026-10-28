@@ -380,7 +380,7 @@ def tooth_entries():
                 conditions=["Karies/Pulpitis", "Parodontitis"] + (["Nichtanlage (Hypodontie)"] if i in (2, 3, 5, 8) else []),
                 technique="Bei Zahnschmerz: Zahnarzt. Begleitend: Masseter-/Temporalis-Entspannung, Hegu (Di 4).",
                 contraindications="Akuter Abszess, Schwellung, Fieber → sofort Zahnarzt.",
-                evidence="gut", pubmed_query="canine agenesis" if i == 3 else "tooth agenesis prevalence meta-analysis",
+                evidence="gut", pubmed_query="maxillary canine agenesis" if i == 3 else "tooth agenesis prevalence meta-analysis",
                 related=related, agenesis=AGENESIS[i],
                 tcm={"organ": organ, "sinnesorgan": sense, "gelenke": joints, "wirbel": verts},
                 claims=[

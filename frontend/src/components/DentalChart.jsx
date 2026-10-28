@@ -38,7 +38,7 @@ export const DentalChart = ({ selectedFdi, missingTeeth, setMissingTeeth, onSele
     if (markMode) setMissingTeeth(missingTeeth.includes(s) ? missingTeeth.filter((x) => x !== s) : [...missingTeeth, s]);
     else onSelectTooth(s);
   };
-  const missingCanine = missingTeeth.some((t) => t.endsWith("3"));
+  const missingCanine = missingTeeth.includes("13");
   const legend = [...new Map([11, 13, 14, 16, 18].map((n) => [GROUP(n).l, GROUP(n)])).values()];
 
   return (
@@ -75,10 +75,10 @@ export const DentalChart = ({ selectedFdi, missingTeeth, setMissingTeeth, onSele
       {missingTeeth.length > 0 && (
         <div className="fade-up rounded-2xl bg-[#2A3B47] p-5 text-white" data-testid="missing-summary">
           <span className="label-caps !text-[#E3DCCD]">Simulation · {missingTeeth.length} Zahn/Zähne nicht angelegt</span>
-          <p className="mt-2 font-mono text-sm">{missingTeeth.sort().join(", ")}</p>
+          <p className="mt-2 font-mono text-sm">{[...missingTeeth].sort().join(", ")}</p>
           {missingCanine && (
             <div className="mt-3 space-y-3">
-              <p className="text-sm leading-relaxed text-white/85">Ein fehlender Eckzahn bedeutet fehlende Eckzahnführung. Diskutiert wird eine absteigende Kette Kiefer → HWS → Becken. Neuroanatomisch erklärbar, als Ursache für Beckenschiefstand aber schwach belegt.</p>
+              <p className="text-sm leading-relaxed text-white/85">Ein fehlender oberer rechter Eckzahn (13) bedeutet fehlende Eckzahnführung. Diskutiert wird eine absteigende Kette Kiefer → HWS → Becken. Neuroanatomisch erklärbar, als Ursache für Beckenschiefstand aber schwach belegt.</p>
               <button data-testid="show-chain-btn" onClick={onShowChain} className="inline-flex items-center gap-2 rounded-full bg-[#D96C50] px-4 py-2 text-xs font-semibold transition-transform hover:translate-x-0.5">
                 Kette im 3D-Modell zeigen <ArrowRight className="h-3.5 w-3.5" />
               </button>

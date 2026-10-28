@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
 
 import os
+import re
 import csv
 import io
 import json
@@ -145,7 +146,7 @@ async def current_admin(request: Request):
 @api.post("/auth/login")
 async def login(body: LoginIn, request: Request, response: Response):
     email = body.email.strip().lower()
-    ident = f"{request.client.host if request.client else 'x'}:{email}"
+    ident = f"login:{email}"
     att = await db.login_attempts.find_one({"identifier": ident})
     if att and att.get("count", 0) >= 5 and att.get("locked_until") and att["locked_until"] > datetime.now(timezone.utc).isoformat():
         raise HTTPException(429, "Zu viele Versuche. Bitte 15 Minuten warten.")
@@ -181,7 +182,7 @@ async def list_entries(layer: Optional[str] = None, q: Optional[str] = None):
     if layer:
         flt["layer"] = layer
     if q:
-        rx = {"$regex": q, "$options": "i"}
+        rx = {"$regex": re.escape(q), "$options": "i"}
         flt["$or"] = [{"name": rx}, {"latin": rx}, {"symptoms": rx}, {"conditions": rx}, {"description": rx}, {"code": rx}]
     docs = await db.entries.find(flt).sort("name", 1).to_list(2000)
     return [Entry.from_mongo(d) for d in docs]
@@ -207,6 +208,9 @@ async def create_entry(body: EntryIn, _=Depends(current_admin)):
 @api.put("/entries/{code}", response_model=Entry)
 async def update_entry(code: str, body: EntryIn, _=Depends(current_admin)):
     data = Entry(**body.model_dump(), updated_at=datetime.now(timezone.utc).isoformat()).to_mongo()
+    data.pop("studies")
+    if body.code != code and await db.entries.find_one({"code": body.code}):
+        raise HTTPException(400, "Code existiert bereits")
     res = await db.entries.update_one({"code": code}, {"$set": data})
     if not res.matched_count:
         raise HTTPException(404, "Eintrag nicht gefunden")
@@ -215,7 +219,9 @@ async def update_entry(code: str, body: EntryIn, _=Depends(current_admin)):
 
 @api.delete("/entries/{code}")
 async def delete_entry(code: str, _=Depends(current_admin)):
-    await db.entries.delete_one({"code": code})
+    res = await db.entries.delete_one({"code": code})
+    if not res.deleted_count:
+        raise HTTPException(404, "Eintrag nicht gefunden")
     return {"ok": True}
 
 
@@ -233,7 +239,7 @@ async def add_study(code: str, study: Study, _=Depends(current_admin)):
 @api.delete("/entries/{code}/studies/{idx}", response_model=Entry)
 async def remove_study(code: str, idx: int, _=Depends(current_admin)):
     doc = await db.entries.find_one({"code": code})
-    if not doc or idx >= len(doc.get("studies", [])):
+    if not doc or idx < 0 or idx >= len(doc.get("studies", [])):
         raise HTTPException(404, "Nicht gefunden")
     studies = doc["studies"]
     studies.pop(idx)
@@ -324,7 +330,11 @@ async def dropin_import(_=Depends(current_admin)):
                 if not code or not await db.entries.find_one({"code": code}):
                     errors.append(f"Unbekannter entry_code '{code}' bei '{s.get('title', '')[:40]}'")
                     continue
-                st = Study(**{k: str(v) for k, v in s.items() if v is not None and k != "entry_code"})
+                try:
+                    st = Study(**{k: str(v) for k, v in s.items() if v is not None and k != "entry_code"})
+                except Exception as ex:
+                    errors.append(f"Zeile ungültig ('{str(s)[:40]}'): {ex}")
+                    continue
                 await db.entries.update_one({"code": code}, {"$push": {"studies": st.model_dump()}})
                 added += 1
             stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
