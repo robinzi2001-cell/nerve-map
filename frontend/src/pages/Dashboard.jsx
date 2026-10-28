@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { Activity, ShieldCheck, LogIn } from "lucide-react";
+import { Activity, ShieldCheck, LogIn, FlaskConical, Loader2 } from "lucide-react";
+import { useProgress } from "@react-three/drei";
+import { SourcesDialog } from "@/components/SourcesDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import BodyScene from "@/components/body/BodyScene";
 import { LayerControls } from "@/components/LayerControls";
@@ -12,7 +14,17 @@ import { PubMedPanel } from "@/components/PubMedPanel";
 import { useAuth } from "@/context/AuthContext";
 import { api, errText } from "@/lib/api";
 
-const INIT_LAYERS = { haut: true, muskeln: false, skelett: true, nerven: true, druckpunkte: true, meridiane: false, zaehne: true, ketten: false };
+const INIT_LAYERS = { haut: true, muskeln: false, skelett: true, nerven: true, gehirn: false, druckpunkte: true, meridiane: false, zaehne: true, ketten: false };
+
+const LoadingBadge = () => {
+  const { active, progress } = useProgress();
+  if (!active) return null;
+  return (
+    <div data-testid="model-loading" className="absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium shadow-sm">
+      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#D96C50]" /> Lade 3D-Modell {Math.round(progress)}%
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const { isAdmin } = useAuth();
@@ -27,6 +39,9 @@ export default function Dashboard() {
   const [right, setRight] = useState("details");
   const [pmQuery, setPmQuery] = useState("");
   const [missingTeeth, setMissingTeeth] = useState(["13"]);
+  const [detailed, setDetailed] = useState(true);
+  const [custom, setCustom] = useState(null);
+  const onInfo = (i) => toast(i.name, { description: "Anatomische Struktur (BodyParts3D) – noch kein Datenbankeintrag" });
 
   useEffect(() => {
     api.get("/entries").then((r) => setEntries(r.data)).catch((e) => toast.error(errText(e)));
@@ -69,6 +84,10 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden text-[11px] text-[#9BA8B2] md:block" data-testid="header-stats">{entries.length} Einträge · {entries.reduce((a, e) => a + (e.studies?.length || 0), 0)} Studien</span>
+          <SourcesDialog />
+          <Link to="/labor" data-testid="labor-link" className="inline-flex items-center gap-1.5 rounded-full bg-[#2A3B47] px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#1A2025]">
+            <FlaskConical className="h-3.5 w-3.5" /> Nerven-Labor
+          </Link>
           <Link to="/admin" data-testid="admin-link" className="inline-flex items-center gap-1.5 rounded-full border border-[#E5E5E0] px-4 py-1.5 text-xs font-semibold transition-colors hover:border-[#2A3B47]">
             {isAdmin ? <ShieldCheck className="h-3.5 w-3.5 text-[#839E8C]" /> : <LogIn className="h-3.5 w-3.5" />} {isAdmin ? "Admin" : "Admin-Login"}
           </Link>
@@ -78,7 +97,8 @@ export default function Dashboard() {
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-4 p-4 lg:grid-cols-12">
         <aside className="thin-scroll min-h-0 space-y-8 overflow-y-auto rounded-xl border border-[#E5E5E0] bg-white p-4 lg:col-span-3">
           <LayerControls layers={layers} setLayers={setLayers} skinOpacity={skinOpacity} setSkinOpacity={setSkinOpacity} counts={counts}
-            view={view} setView={changeView} autoRotate={autoRotate} setAutoRotate={setAutoRotate} />
+            view={view} setView={changeView} autoRotate={autoRotate} setAutoRotate={setAutoRotate}
+            detailed={detailed} setDetailed={setDetailed} custom={custom} setCustom={setCustom} />
           <EntryList entries={entries} selected={selected} onSelect={select} />
         </aside>
 
@@ -92,7 +112,9 @@ export default function Dashboard() {
           {center === "3d" ? (
             <>
               <BodyScene entries={entries} layers={layers} skinOpacity={skinOpacity} selected={selected} related={related} onSelect={select}
-                view={view} viewTick={viewTick} missingTeeth={missingTeeth} autoRotate={autoRotate} />
+                view={view} viewTick={viewTick} missingTeeth={missingTeeth} autoRotate={autoRotate}
+                detailed={detailed} onInfo={onInfo} custom={custom} />
+              <LoadingBadge />
               <div className="pointer-events-none absolute bottom-4 left-4 text-[10px] uppercase tracking-[0.2em] text-[#9BA8B2]">Ziehen = drehen · Scrollen = zoomen · Rechtsklick = verschieben</div>
             </>
           ) : (
@@ -118,7 +140,7 @@ export default function Dashboard() {
           </Tabs>
         </aside>
       </main>
-      <footer className="px-6 pb-3 text-[10px] text-[#9BA8B2]">Lern- und Recherchewerkzeug, kein Ersatz für ärztliche oder zahnärztliche Diagnose. Traditionelle Zuordnungen (TCM, Ayurveda, Reflexzonen, Voll-Schema) sind als solche gekennzeichnet.</footer>
+      <footer className="px-6 pb-3 text-[10px] text-[#9BA8B2]">Lern- und Recherchewerkzeug, kein Ersatz für ärztliche oder zahnärztliche Diagnose. Traditionelle Zuordnungen (TCM, Ayurveda, Reflexzonen, Voll-Schema) sind als solche gekennzeichnet. 3D-Anatomie: BodyParts3D © DBCLS, CC BY-SA 2.1 JP.</footer>
     </div>
   );
 }

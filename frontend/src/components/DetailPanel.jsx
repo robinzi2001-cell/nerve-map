@@ -1,5 +1,6 @@
 import { Fragment } from "react";
-import { AlertTriangle, Hand, Link2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, Hand, Link2, FlaskConical } from "lucide-react";
 import { EvidenceBadge, TraditionBadge } from "@/components/EvidenceBadge";
 import { StudyList } from "@/components/StudyList";
 import { LAYERS } from "@/lib/api";
@@ -90,6 +91,13 @@ export const DetailPanel = ({ entry, all, onSelect, isAdmin, onRemoveStudy, onPu
         <div className="flex gap-2.5 rounded-lg border border-[#C8483B]/30 bg-[#C8483B]/5 p-3 text-[12px] text-[#8A2E24]" data-testid="contraindication-box">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /> <span><b>Vorsicht:</b> {entry.contraindications}</span>
         </div>
+      )}
+
+      {entry.layer === "nerven" && (
+        <Link to={entry.code === "n-vagus" ? "/labor?tab=hrv" : "/labor?tab=neuron"} data-testid="open-lab-btn"
+          className="flex items-center justify-between rounded-lg border border-[#2F6FB0]/30 bg-[#2F6FB0]/5 p-3 text-[12.5px] font-medium text-[#2F6FB0] transition-colors hover:bg-[#2F6FB0]/10">
+          {entry.code === "n-vagus" ? "Vagustonus vorher/nachher messen (HRV)" : "Leitung & Heilung simulieren (NEURON)"} <FlaskConical className="h-4 w-4" />
+        </Link>
       )}
 
       {entry.related?.length > 0 && (

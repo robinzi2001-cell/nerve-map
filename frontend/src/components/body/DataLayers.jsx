@@ -38,13 +38,13 @@ const useHover = (code, setHover) => (on) => (e) => {
   document.body.style.cursor = on ? "pointer" : "auto";
 };
 
-export const EntryMesh = ({ entry, selected, highlighted, dimmed, onSelect, missing }) => {
+export const EntryMesh = ({ entry, selected, highlighted, dimmed, onSelect, missing, thin }) => {
   const [hover, setHover] = useState(null);
   const onHover = useHover(entry.code, setHover);
   const active = selected || highlighted || hover === entry.code;
   const pick = (e) => { e.stopPropagation(); onSelect(entry.code); };
   const isTooth = entry.layer === "zaehne";
-  const radius = entry.layer === "nerven" ? 0.0042 : entry.layer === "ketten" ? 0.0035 : 0.0026;
+  const radius = (entry.layer === "nerven" ? 0.0042 : entry.layer === "ketten" ? 0.0035 : 0.0026) * (thin ? 0.6 : 1);
   const color = isTooth && missing ? "#C8483B" : entry.color;
 
   return (
@@ -55,7 +55,7 @@ export const EntryMesh = ({ entry, selected, highlighted, dimmed, onSelect, miss
       {(entry.positions || []).map((p, i) => (
         <group key={i}>
           <mesh position={p} onClick={pick} onPointerOver={onHover(true)} onPointerOut={onHover(false)}>
-            {isTooth ? <boxGeometry args={[0.0062, 0.011, 0.0068]} /> : <sphereGeometry args={[active ? 0.011 : 0.008, 16, 12]} />}
+            {isTooth ? <boxGeometry args={[0.0062, 0.011, 0.0068]} /> : <sphereGeometry args={[(active ? 0.011 : 0.008) * (thin ? 0.55 : 1), 16, 12]} />}
             <meshStandardMaterial color={color} emissive={active ? color : "#000"} emissiveIntensity={active ? 0.6 : 0}
               transparent opacity={isTooth && missing ? 0.35 : dimmed ? 0.3 : 1} roughness={0.35} />
           </mesh>

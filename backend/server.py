@@ -24,6 +24,9 @@ from starlette.middleware.cors import CORSMiddleware
 
 from seed_data import all_entries
 from pubmed import search_pubmed
+import nerve_sim
+import hrv
+from fastapi import Form
 
 client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 db = client[os.environ["DB_NAME"]]
@@ -264,6 +267,40 @@ async def pubmed(q: str, limit: int = 10):
     except Exception as ex:
         logger.warning("pubmed failed: %s", ex)
         raise HTTPException(502, "PubMed ist gerade nicht erreichbar")
+
+
+# ---------- labs: NEURON conduction + NeuroKit2 HRV ----------
+class SimIn(BaseModel):
+    condition: str
+    temperature: float = Field(33.0, ge=20, le=40)
+
+
+@api.get("/sim/conditions")
+def sim_conditions():
+    return [{"key": k, **v} for k, v in nerve_sim.CONDITIONS.items()]
+
+
+@api.post("/sim/axon")
+def sim_axon(body: SimIn):
+    if body.condition not in nerve_sim.CONDITIONS:
+        raise HTTPException(400, "Unbekannter Zustand")
+    return nerve_sim.simulate(body.condition, body.temperature)
+
+
+@api.post("/hrv/analyze")
+def hrv_analyze(file: UploadFile = File(...), kind: str = Form("rr"), sampling_rate: int = Form(1000)):
+    raw = file.file.read(5_000_001)
+    if len(raw) > 5_000_000:
+        raise HTTPException(400, "Datei zu groß (max. 5 MB)")
+    try:
+        return hrv.analyze(raw.decode("utf-8-sig", errors="ignore"), kind, sampling_rate)
+    except Exception as ex:
+        raise HTTPException(400, f"Analyse fehlgeschlagen: {ex}")
+
+
+@api.get("/hrv/demo")
+def hrv_demo(heart_rate: int = 70, variability: float = 3.0):
+    return hrv.demo(max(45, min(heart_rate, 120)), max(0.5, min(variability, 10)))
 
 
 # ---------- drop-in folder ----------

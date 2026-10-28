@@ -1,4 +1,9 @@
+import copy
+import json
 import math
+from pathlib import Path
+
+import numpy as np
 
 
 def mirror(path):
@@ -391,9 +396,39 @@ def tooth_entries():
     return out
 
 
+# Original coordinates were drafted on the simplified body; warp them onto BodyParts3D anatomy.
+Y_SRC = [0.0, 0.08, 0.5, 0.92, 1.42, 1.51, 1.597, 1.62, 1.73]
+Y_DST = [0.0, 0.06, 0.45, 0.92, 1.41, 1.49, 1.545, 1.6, 1.72]
+TOOTH_POS = json.loads((Path(__file__).parent / "data" / "tooth_positions.json").read_text())
+# Arm nerves traced from BodyParts3D meshes (left side, mirrored) + hand extension
+ARM_PATHS = json.loads((Path(__file__).parent / "data" / "arm_nerve_paths.json").read_text())
+HAND_END = {"n-medianus": [0.27, 0.8, 0.05], "n-ulnaris": [0.28, 0.79, 0.03], "n-radialis": [0.285, 0.83, 0.02]}
+
+
+def warp(p):
+    x, y, z = p
+    ny = float(np.interp(y, Y_SRC, Y_DST))
+    if y > 1.47:
+        x *= 0.72
+    elif abs(x) > 0.24 and y < 0.95:
+        x *= 0.93
+        ny += 0.035 * min(1.0, max(0.0, (0.95 - y) / 0.1))
+    return [round(x, 4), round(ny, 4), z]
+
+
 def all_entries():
-    entries = NERVES + POINTS + MERIDIAN_ENTRIES + CHAINS + tooth_entries()
+    entries = copy.deepcopy(NERVES + POINTS + MERIDIAN_ENTRIES + CHAINS) + tooth_entries()
     for e in entries:
+        if e.get("fdi"):
+            e["positions"] = [TOOTH_POS[e["fdi"]]]
+        elif e["code"] in ARM_PATHS:
+            left = ARM_PATHS[e["code"]] + [HAND_END[e["code"]]]
+            e["paths"] = [mirror(left), left]
+        else:
+            if e.get("positions"):
+                e["positions"] = [warp(p) for p in e["positions"]]
+            if e.get("paths"):
+                e["paths"] = [[warp(p) for p in path] for path in e["paths"]]
         e.setdefault("related", [])
         e.setdefault("positions", None)
         e.setdefault("paths", None)

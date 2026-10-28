@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import Dashboard from "@/pages/Dashboard";
 import Admin from "@/pages/Admin";
+import Labor from "@/pages/Labor";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/labor" element={<Labor />} />
           </Routes>
         </BrowserRouter>
         <Toaster position="bottom-right" />

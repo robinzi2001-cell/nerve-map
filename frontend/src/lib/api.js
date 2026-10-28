@@ -28,6 +28,7 @@ export const LAYERS = [
   { key: "muskeln", label: "Muskeln", hint: "Myofasziale Ebene", data: false },
   { key: "skelett", label: "Skelett", hint: "Knochen & Wirbelsäule", data: false },
   { key: "nerven", label: "Nervensystem", hint: "Periphere & Hirnnerven", data: true },
+  { key: "gehirn", label: "Gehirn", hint: "89 Strukturen, nur Detailliert", data: false, detailedOnly: true },
   { key: "druckpunkte", label: "Druckpunkte", hint: "TCM, Marma, Triggerpunkte", data: true },
   { key: "meridiane", label: "Meridiane", hint: "TCM-Leitbahnen", data: true },
   { key: "zaehne", label: "Zähne", hint: "FDI 11–48", data: true },

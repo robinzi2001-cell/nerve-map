@@ -4,6 +4,8 @@ import { OrbitControls, ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
 import { Skin, Muscles, Skeleton } from "@/components/body/Anatomy";
 import { EntryMesh } from "@/components/body/DataLayers";
+import { DetailedModel } from "@/components/body/DetailedModel";
+import { CustomModel } from "@/components/body/CustomModel";
 
 export const VIEWS = {
   vorne: { pos: [0, 0.95, 3.1], target: [0, 0.88, 0], label: "Vorne" },
@@ -31,8 +33,8 @@ const CameraRig = ({ view, tick }) => {
   return null;
 };
 
-export default function BodyScene({ entries, layers, skinOpacity, selected, related, onSelect, view, viewTick, missingTeeth, autoRotate }) {
-  const visible = entries.filter((e) => layers[e.layer]);
+export default function BodyScene({ entries, layers, skinOpacity, selected, related, onSelect, view, viewTick, missingTeeth, autoRotate, detailed, onInfo, custom }) {
+  const visible = entries.filter((e) => layers[e.layer] && !(detailed && e.fdi && !e.fdi.endsWith("8")));
   return (
     <Canvas data-testid="body-3d-canvas" camera={{ position: [0, 0.95, 3.1], fov: 38, near: 0.01 }} dpr={[1, 2]} onPointerMissed={() => onSelect(null)}>
       <color attach="background" args={["#F4F2EC"]} />
@@ -40,14 +42,16 @@ export default function BodyScene({ entries, layers, skinOpacity, selected, rela
       <directionalLight position={[2, 3, 2]} intensity={1.1} />
       <directionalLight position={[-2, 2, -2]} intensity={0.5} color="#DDE6EE" />
       <Suspense fallback={null}>
-        {layers.skelett && <Skeleton />}
-        {layers.muskeln && <Muscles />}
+        {!detailed && layers.skelett && <Skeleton />}
+        {!detailed && layers.muskeln && <Muscles />}
+        {detailed && <DetailedModel layers={layers} opacity={skinOpacity} selected={selected} related={related} missingTeeth={missingTeeth} onSelect={onSelect} onInfo={onInfo} />}
+        {custom && <CustomModel buffer={custom.buffer} ras={custom.ras} />}
         {visible.map((e) => (
           <EntryMesh key={e.code} entry={e} selected={selected === e.code} highlighted={related.includes(e.code)}
             dimmed={!!selected && selected !== e.code && !related.includes(e.code)} onSelect={onSelect}
-            missing={e.fdi && missingTeeth.includes(e.fdi)} />
+            missing={e.fdi && missingTeeth.includes(e.fdi)} thin={detailed} />
         ))}
-        {layers.haut && <Skin opacity={skinOpacity} />}
+        {!detailed && layers.haut && <Skin opacity={skinOpacity} />}
         <ContactShadows position={[0, 0, 0]} opacity={0.35} scale={2} blur={2.4} far={1} />
       </Suspense>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} raycast={() => null}>
