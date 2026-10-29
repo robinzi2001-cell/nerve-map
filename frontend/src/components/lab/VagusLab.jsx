@@ -7,7 +7,7 @@ import { Loader2, Upload, HeartPulse } from "lucide-react";
 import { toast } from "sonner";
 import { api, errText } from "@/lib/api";
 
-const METRICS = [["hr_mean", "Puls", "bpm"], ["rmssd", "RMSSD", "ms"], ["sdnn", "SDNN", "ms"], ["pnn50", "pNN50", "%"], ["hf", "HF-Power", "ms²"], ["lfhf", "LF/HF", ""]];
+const METRICS = [["hr_mean", "Puls", "bpm"], ["rmssd", "RMSSD", "ms"], ["sdnn", "SDNN", "ms"], ["pnn50", "pNN50", "%"], ["hfnu", "HF-Anteil", "n.u."], ["lfhf", "LF/HF", ""]];
 
 const Measurement = ({ slot, value, onChange }) => {
   const ref = useRef();

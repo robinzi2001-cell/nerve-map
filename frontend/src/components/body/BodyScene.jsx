@@ -45,7 +45,7 @@ export default function BodyScene({ entries, layers, skinOpacity, selected, rela
         {!detailed && layers.skelett && <Skeleton />}
         {!detailed && layers.muskeln && <Muscles />}
         {detailed && <DetailedModel layers={layers} opacity={skinOpacity} selected={selected} related={related} missingTeeth={missingTeeth} onSelect={onSelect} onInfo={onInfo} />}
-        {custom && <CustomModel buffer={custom.buffer} ras={custom.ras} />}
+        {detailed && custom && <CustomModel buffer={custom.buffer} ras={custom.ras} />}
         {visible.map((e) => (
           <EntryMesh key={e.code} entry={e} selected={selected === e.code} highlighted={related.includes(e.code)}
             dimmed={!!selected && selected !== e.code && !related.includes(e.code)} onSelect={onSelect}

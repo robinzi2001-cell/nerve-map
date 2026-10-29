@@ -11,7 +11,7 @@ def _first_numeric(text: str):
     if num.empty:
         df = pd.read_csv(io.StringIO(text), header=None, sep=None, engine="python")
         num = df.select_dtypes("number")
-    if num.empty:
+    if num.empty or num.dropna(how="all").empty:
         raise ValueError("Keine Zahlenspalte gefunden")
     return num.iloc[:, -1 if num.shape[1] > 1 and "time" in str(num.columns[0]).lower() else 0].dropna().to_numpy(dtype=float)
 
@@ -27,13 +27,14 @@ def _metrics(peaks, sr):
         "hr_mean": round(float(60000 / rr.mean()), 1),
         "rmssd": round(float(t["HRV_RMSSD"].iloc[0]), 1), "sdnn": round(float(t["HRV_SDNN"].iloc[0]), 1),
         "pnn50": round(float(t["HRV_pNN50"].iloc[0]), 1),
-        "hf": None, "lf": None, "lfhf": None,
+        "hfnu": None, "lfhf": None,
     }
     if out["duration_s"] >= 110:
         f = nk.hrv_frequency(peaks, sampling_rate=sr)
-        for k, c in (("hf", "HRV_HF"), ("lf", "HRV_LF"), ("lfhf", "HRV_LFHF")):
-            v = f[c].iloc[0]
-            out[k] = None if pd.isna(v) else round(float(v), 4)
+        hf, lf, lfhf = (f[c].iloc[0] for c in ("HRV_HF", "HRV_LF", "HRV_LFHF"))
+        if not (pd.isna(hf) or pd.isna(lf)) and hf + lf > 0:
+            out["hfnu"] = round(float(hf / (hf + lf) * 100), 1)
+        out["lfhf"] = None if pd.isna(lfhf) else round(float(lfhf), 2)
     times = (peaks[1:] - peaks[0]) / sr
     stride = max(1, len(rr) // 300)
     out["rr_series"] = [{"t": round(float(a), 1), "rr": round(float(b), 1)} for a, b in zip(times[::stride], rr[::stride])]

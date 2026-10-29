@@ -1,0 +1,53 @@
+{
+  "summary": "Iteration 2: tested the detailed/simplified model switch (BodyParts3D GLB layers), loading a custom STL, the sources dialog, the open-lab links, the NEURON lab and the NeuroKit2 HRV lab, plus a quick regression check of the earlier APIs. Backend: 37/37 pytest pass (20 old + 17 new lab tests). Frontend: nearly everything works. One HIGH bug: loading an invalid or corrupt .stl file crashes the whole React app.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/hrv/demo, /api/hrv/analyze", "issue": "The 'hf' field is about 0.03 for every input (demo vorher 0.0304, nachher 0.0318, RR CSV 0.11), but the UI labels it 'HF-Power ms²'. Absolute HF power in ms² should be in the hundreds. These look like normalised or different units, so HF barely changes (+5%) while RMSSD changes +265%. Either compute absolute power or relabel the unit (n.u. / relative)."},
+      {"endpoint": "/api/hrv/analyze", "issue": "A file with no numeric column (e.g. 'foo,bar,baz') returns 400 'Zu wenige Herzschläge' instead of 'Keine Zahlenspalte gefunden'. The error is acceptable but the message is misleading."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "CustomModel / LayerControls CustomStl", "issue": "Uploading an invalid STL (a text file renamed to .stl) throws 'Offset is outside the bounds of the DataView' inside STLLoader.parse in a useMemo within the Canvas. There is no try/catch or error boundary, so the whole app white-screens. Fix: parse in LayerControls.load() inside try/catch, check that the geometry has position.count > 0, show toast.error on failure, and only setCustom on success (or wrap CustomModel in an ErrorBoundary).", "selector": "[data-testid='custom-stl-input']", "priority": "HIGH"},
+      {"component": "BodyScene custom model", "issue": "After loading an STL and switching to 'Vereinfacht', the purple custom brain mesh is still rendered (BodyScene renders {custom && <CustomModel>} without checking detailed). The custom-stl-remove control is hidden in simplified mode, so the user cannot remove it there. Gate it with detailed && custom, or show the control in both modes.", "selector": "[data-testid='model-mode-vereinfacht']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Labor NEURON stats", "issues": ["In the 'Status' card the sim-status badge sits on the same line as the STATUS label, while the other cards put their value below the label. Inconsistent alignment.", "Recharts legend order shows '14.4 mm' before '2.4 mm' (r1 before r0)."]}
+    ]
+  },
+  "passed_tests": [
+    "Mode switch: Detailliert is the default; switching to Vereinfacht and back works; layer-toggle-gehirn and custom-stl-btn appear only in detailed mode",
+    "GLB: skin, bones, nerves, teeth load at start, and muscles and brain load on first toggle, all with HTTP 200; the model-loading badge disappears after about 5s",
+    "Toggling haut/skelett/muskeln/nerven/zaehne/gehirn off and on gives no console errors",
+    "Clicking entry-item-n-medianus opens the detail panel; open-lab-btn links to /labor?tab=neuron. For n-vagus it links to /labor?tab=hrv. Selecting n-ulnaris in simplified mode works",
+    "Dental chart: tooth-13 opens its detail; show-chain-btn opens 'Kette: Zahn 13 → Kiefer → HWS → Becken' with the side view",
+    "Binary and ASCII STL load: custom-stl-name shows the file name; custom-stl-remove restores custom-stl-btn",
+    "Sources dialog lists BodyParts3D, olivercase API, NEURON, NeuroKit2, brain-stl and PubMed; hnn-core and threeBrain appear under 'Bewusst weggelassen'. labor-link points to /labor",
+    "NEURON lab (velocity in m/s): gesund 69.4 Leitet; neuropraxie shows Leitungsblock; remyelinisierung 57.3; demyelinisierung 35.3; regeneration_frueh 8.0 distal; regeneration_spaet 51.7 distal. At 24°C gesund drops to 50. The chart (4 lines) and the propagation view render",
+    "HRV lab: both demos fill all 6 hrv-row-* rows and hrv-interpretation; rr.csv (200 values) gives 201 beats; an invalid CSV shows an error toast",
+    "Backend: conditions return 6 items; axon response has traces r0..r3; invalid condition gives 400; temperatures 19 and 41 give 422; HRV demo and analyze (rr) work",
+    "Regression pytest (entries, auth, admin CRUD, PubMed, drop-in) all pass"
+  ],
+  "test_report_links": ["/app/backend/tests/test_labs_api.py", "/app/backend/tests/test_nervenpfad_api.py", "/app/test_reports/pytest/pytest_results_iter2.xml"],
+  "action_items": [
+    "HIGH: Guard STL parsing (try/catch plus toast, or an ErrorBoundary) so an invalid .stl does not crash the app",
+    "LOW: Hide the custom STL mesh in simplified mode, or show the remove control there",
+    "LOW: Fix the HF-Power unit or values (NeuroKit2 output is not ms² as shown)",
+    "LOW: Align the sim-status badge below the STATUS label"
+  ],
+  "critical_code_review_comments": [
+    "nerve_sim.simulate holds a global threading.Lock, so concurrent simulation requests are serialised. Fine for an MVP, but each call takes about 0.3 to 1s.",
+    "/api/hrv/demo and /api/hrv/analyze are sync def endpoints running CPU-heavy NeuroKit work in the threadpool. Acceptable, but there is no rate limiting.",
+    "hrv_analyze catches every Exception and returns 400 with the raw exception text. Acceptable, but it can leak internal messages.",
+    "The NerveLab slider range (24-38) is narrower than the backend's accepted 20-40. Consistent enough."
+  ],
+  "updated_files": ["/app/backend/tests/test_labs_api.py"],
+  "success_rate": {"backend": "100%", "frontend": "92%"},
+  "test_credentials": "admin@nervenpfad.de / Nerven2026! (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None (the drop-in and CRUD tests clean up their TEST_ data)",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Test files are in /tmp/t (tet.stl, tet_ascii.stl, text.stl, rr.csv, bad.csv); regenerate them if missing. In headless WebGL, page.wait_for_selector(state='visible') on dialogs can time out even though the dialog is open; use state='attached'. There is no center-tab-gebiss testid; use the text 'Gebiss-Schema'. pytest.ini uses xdist; run with -n0 -s to see printed values."
+}

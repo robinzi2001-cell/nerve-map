@@ -5,6 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
+from extra_points import EXTRA_POINTS
+
 
 def mirror(path):
     return [[-p[0], p[1], p[2]] for p in path]
@@ -429,6 +431,13 @@ def all_entries():
                 e["positions"] = [warp(p) for p in e["positions"]]
             if e.get("paths"):
                 e["paths"] = [[warp(p) for p in path] for path in e["paths"]]
+    extra_pos = json.loads((Path(__file__).parent / "data" / "extra_points_pos.json").read_text())
+    for p in copy.deepcopy(EXTRA_POINTS):
+        for k in ("anchor", "direction", "deep", "bilateral"):
+            p.pop(k)
+        p["positions"] = extra_pos[p["code"]]
+        entries.append(p)
+    for e in entries:
         e.setdefault("related", [])
         e.setdefault("positions", None)
         e.setdefault("paths", None)

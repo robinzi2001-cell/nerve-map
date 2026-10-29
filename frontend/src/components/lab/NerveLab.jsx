@@ -100,7 +100,7 @@ export const NerveLab = () => {
               <Stat label="Proximal" value={res.velocity_proximal} unit="m/s" testid="sim-velocity-proximal" />
               <Stat label="Distal" value={res.velocity_distal} unit="m/s" testid="sim-velocity-distal" />
               <div className="rounded-xl border border-[#E5E5E0] bg-white p-4">
-                <span className="label-caps">Status</span>
+                <span className="label-caps block">Status</span>
                 <div data-testid="sim-status" className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white ${res.blocked ? "bg-[#C8483B]" : "bg-[#3E8E4A]"}`}>
                   <Zap className="h-3.5 w-3.5" /> {res.blocked ? "Leitungsblock" : "Leitet"}
                 </div>

@@ -1,0 +1,3 @@
+entry_code;title;authors;journal;year;url;source
+TEST_dropin_pytest;TEST CSV Studie;Muster A;J Test;2024;https://example.org;Eigene Quelle
+unknown-code-xyz;TEST Unknown;B;J;2020;;Eigene Quelle

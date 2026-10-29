@@ -225,6 +225,7 @@ async def delete_entry(code: str, _=Depends(current_admin)):
     res = await db.entries.delete_one({"code": code})
     if not res.deleted_count:
         raise HTTPException(404, "Eintrag nicht gefunden")
+    await db.deleted_seed.update_one({"code": code}, {"$set": {"code": code}}, upsert=True)
     return {"ok": True}
 
 
@@ -390,10 +391,13 @@ async def seed():
     email = os.environ["ADMIN_EMAIL"].lower()
     if not await db.users.find_one({"email": email}):
         await db.users.insert_one({"email": email, "password_hash": hash_password(os.environ["ADMIN_PASSWORD"]), "name": "Admin", "role": "admin", "created_at": datetime.now(timezone.utc).isoformat()})
-    if await db.entries.count_documents({}) == 0:
+    existing = {d["code"] async for d in db.entries.find({}, {"code": 1})}
+    deleted = {d["code"] async for d in db.deleted_seed.find({}, {"code": 1})}
+    missing = [e for e in all_entries() if e["code"] not in existing and e["code"] not in deleted]
+    if missing:
         cache = json.loads(SEED_STUDIES.read_text()) if SEED_STUDIES.exists() else {}
         docs = []
-        for e in all_entries():
+        for e in missing:
             e["studies"] = [dict(s, notes="Automatisch aus PubMed-Suche: " + e["pubmed_query"]) for s in cache.get(e["pubmed_query"], [])]
             docs.append(Entry(**EntryIn(**e).model_dump(), updated_at=datetime.now(timezone.utc).isoformat()).to_mongo())
         await db.entries.insert_many(docs)

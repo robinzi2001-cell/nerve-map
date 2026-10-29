@@ -3,6 +3,8 @@ import { Slider } from "@/components/ui/slider";
 import { LAYERS } from "@/lib/api";
 import { VIEWS } from "@/components/body/BodyScene";
 import { useRef } from "react";
+import { toast } from "sonner";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader";
 import { Layers, RotateCw, Upload, X } from "lucide-react";
 
 const ModeSwitch = ({ detailed, setDetailed }) => (
@@ -18,8 +20,16 @@ const CustomStl = ({ custom, setCustom }) => {
   const ref = useRef();
   const load = async (e) => {
     const f = e.target.files[0];
-    if (f) setCustom({ name: f.name, buffer: await f.arrayBuffer(), ras: true });
     e.target.value = "";
+    if (!f) return;
+    try {
+      const buffer = await f.arrayBuffer();
+      const g = new STLLoader().parse(buffer);
+      if (!g.attributes.position?.count) throw new Error("leer");
+      setCustom({ name: f.name, buffer, ras: true });
+    } catch {
+      toast.error("Ungültige STL-Datei");
+    }
   };
   return (
     <div className="space-y-1.5 rounded-lg border border-dashed border-[#E3DCCD] p-3">
